@@ -1,5 +1,6 @@
 # Smite RPC
 Discord Remote Procedural Calls to show your smite match!
+Make sure your smite profile is NOT private or this wont work.
 
 ## Setup:
 * [Apply to the smite api](https://fs12.formsite.com/HiRez/form48/secure_index.html)
