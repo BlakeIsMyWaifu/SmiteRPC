@@ -1,26 +1,10 @@
-// Just add your username
-var username = '';
-
-// Change your platform if you want console (pc/xbox/ps4)
-var platform = 'pc';
-
-// These two require you to apply to the HiRez API
-var devId = '';
-var authKey = '';
-
-// If you want to find out how many requests you have let change this to true and restart
-var showRateLimit = false;
-
-
-
-
+const config = require('./config.json');
 const DiscordRPC = require('discord-rpc');
 const md5 = require('md5');
 const moment = require('moment');
 const request = require('request');
 const Enmap = require('enmap');
 smite = new Enmap();
-// DO NOT CHANGE THIS! This is not your discord client id, it is the RPC id
 const clientId = '438285137776607242';
 DiscordRPC.register(clientId);
 const rpc = new DiscordRPC.Client({transport: 'ipc'});
@@ -31,7 +15,7 @@ let domain = {
 	"xbox": 'http://api.xbox.smitegame.com/smiteapi.svc',
 	"ps4": 'http://api.ps4.smitegame.com/smiteapi.svc'
 };
-domain = domain[platform];
+domain = domain[config.platform];
 let q = {
 	"435": "Arena",
 	"448": "Joust",
@@ -57,9 +41,9 @@ const requestErr = (err, res) => {
 		log(`Error: ${err}\nCode: ${res.statusCode}`)
 	}
 };
-const createSignature = (method) => {return md5(devId + method + authKey + moment().utc().format('YYYYMMDDHHmmss'))};
+const createSignature = (method) => {return md5(config.devId + method + config.authKey + moment().utc().format('YYYYMMDDHHmmss'))};
 const createURL = (method, session, para) => {
-	let url = `${domain}/${method}Json/${devId}/${createSignature(method)}`;
+	let url = `${domain}/${method}Json/${config.devId}/${createSignature(method)}`;
 	url += session ? `/${smite.get('session')}` : '';
 	url += `/${moment().utc().format('YYYYMMDDHHmmss')}`;
 	url += para.length > 0 ? `/${para.join('/')}` : '';
@@ -86,7 +70,7 @@ function smiteApi() {
 				smiteApi();
 			});
 		} else {
-			if (showRateLimit) {
+			if (config.showRateLimit) {
 				request.get({
 					url: createURL('getdataused', true, []),
 					json: true,
@@ -99,7 +83,7 @@ function smiteApi() {
 				});
 			} else {
 				request.get({
-					url: createURL('getplayerstatus', true, [username]),
+					url: createURL('getplayerstatus', true, [config.username]),
 					json: true,
 					headers: {'User-Agent': 'require'}
 				}, (err, res, data) => {
@@ -112,11 +96,11 @@ function smiteApi() {
 								headers: {'User-Agent': 'request'}
 							}, (err, res, matchData) => {
 								request.get({
-									url: createURL('getfriends', true, [username]),
+									url: createURL('getfriends', true, [config.username]),
 									json: true,
 									headers: {'User-Agent': 'request'}
 								}, (err, res, friendData) => {
-									var p = matchData.find(function(obj) {return obj.playerName === username});
+									var p = matchData.find(function(obj) {return obj.playerName === config.username});
 									var maxPartySize = matchData.length / 2;
 									var partyCount = 1;
 									for (let player of matchData) {
