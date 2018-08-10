@@ -11,6 +11,5 @@ Discord Remote Procedural Calls to show your smite match!
 * Have fun!
 
 ## Contact:
-Discord: Blake Belladonna#1608 (id: 166641492113358848)
-
-Reddit: /u/Gazder
+* **Discord:** Blake Belladonna#1608 (id: 166641492113358848)
+* **Reddit:** /u/Gazder
