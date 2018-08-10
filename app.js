@@ -38,7 +38,7 @@ let q = {
 const log = (msg) => console.log(`[${moment().utc().format('HH:mm:ss')}] ${msg}`);
 const requestErr = (err, res) => {
 	if (err || res.statusCode !== 200) {
-		log(`Error: ${err}\nCode: ${res.statusCode}`)
+		log(`Error: ${err}\nCode: ${res.statusCode}`);
 	}
 };
 const createSignature = (method) => {return md5(config.devId + method + config.authKey + moment().utc().format('YYYYMMDDHHmmss'))};
