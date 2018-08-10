@@ -13,3 +13,6 @@ Discord Remote Procedural Calls to show your smite match!
 ## Contact:
 * **Discord:** Blake Belladonna#1608 (id: 166641492113358848)
 * **Reddit:** /u/Gazder
+
+# Settings:
+You can change showRateLimit in the config to true to display have many requests you have left
