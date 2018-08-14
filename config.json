@@ -3,5 +3,7 @@
 	"platform": "",
 	"devId": "",
 	"authKey": "",
-	"showRateLimit": false
+	"showRateLimit": false,
+	"offline": true,
+	"log": false
 }

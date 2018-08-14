@@ -1,4 +1,9 @@
+if (process.version.slice(1).split('.')[0] < 8) {
+	log('Node version 8.0.0 or higher is required!');
+	process.exit(1);
+}
 const config = require('./config.json');
+const q = require('./q.json');
 const DiscordRPC = require('discord-rpc');
 const md5 = require('md5');
 const moment = require('moment');
@@ -10,36 +15,20 @@ DiscordRPC.register(clientId);
 const rpc = new DiscordRPC.Client({transport: 'ipc'});
 const startTimestamp = new Date();
 
+let platform = ['pc', 'xbox', 'ps4'].indexOf(config.platform.toLowerCase()) > -1 ? config.platform : 'pc';
 let domain = {
 	"pc": 'http://api.smitegame.com/smiteapi.svc',
 	"xbox": 'http://api.xbox.smitegame.com/smiteapi.svc',
 	"ps4": 'http://api.ps4.smitegame.com/smiteapi.svc'
 };
-domain = domain[config.platform];
-let q = {
-	"435": "Arena",
-	"448": "Joust",
-	"426": "Conquest",
-	"445": "Assault",
-	"466": "Clash",
-	"495": "Adventure",
-	"451": "Ranked Conquest",
-	"434": "MOTD",
-	"459": "Siege",
-	"450": "Ranked Joust",
-	"440": "Duel",
-	"441": "Custom Joust",
-	"457": "Arena (vs AI) Easy",
-	"468": "Arena (vs AI) Medium",
-	"436": "Basic Tutorial",
-	"438": "Custom Arena",
-	"429": "Custom Conquest"
-};
+domain = domain[platform];
 const log = (msg) => console.log(`[${moment().utc().format('HH:mm:ss')}] ${msg}`);
 const requestErr = (err, res) => {
-	if (err || res.statusCode !== 200) {
-		log(`Error: ${err}\nCode: ${res.statusCode}`);
+	if (!res) {
+		log('No responce from api');
+		process.exit(1);
 	}
+	if (err || res.statusCode !== 200) log(`Error: ${err}\nCode: ${res.statusCode}`);
 };
 const createSignature = (method) => {return md5(config.devId + method + config.authKey + moment().utc().format('YYYYMMDDHHmmss'))};
 const createURL = (method, session, para) => {
@@ -50,6 +39,21 @@ const createURL = (method, session, para) => {
 	return url;
 };
 
+async function setActivity() {
+	if (!rpc) return;
+	smiteApi();
+}
+
+rpc.on('ready', () => {
+	setActivity();
+	log('Ready!');
+	setInterval(() => {
+		setActivity();
+	}, 15e3);
+});
+
+rpc.login({clientId}).catch(console.error);
+
 function smiteApi() {
 	request.get({
 		url: createURL('testsession', true, []),
@@ -57,19 +61,23 @@ function smiteApi() {
 		headers: {'User-Agent': 'request'}
 	}, (err, res, data) => {
 		requestErr(err, res);
+		if (config.log) log('testsession complete');
 		let message = data.split(' ');
 		message = message[0] + message[1] + message[2];
 		if (message === "Invalidsessionid.") {
+			if (config.log) log('session invalid');
 			request.get({
 				url: createURL('createsession', false, []),
 				json: true,
 				headers: {'User-Agent': 'request'}
 			}, (err, res, data) => {
 				requestErr(err, res);
+				if (config.log) log('createsession complete');
 				smite.set('session', data.session_id);
 				smiteApi();
 			});
 		} else {
+			if (config.log) log('session valid');
 			if (config.showRateLimit) {
 				request.get({
 					url: createURL('getdataused', true, []),
@@ -77,6 +85,7 @@ function smiteApi() {
 					headers: {'User-Agent': 'request'}
 				}, (err, res, data) => {
 					requestErr(err, res);
+					if (config.log) log('getdataused');
 					console.log(`Requests: ${data[0].Total_Requests_Today} / ${data[0].Request_Limit_Daily}`);
 					console.log(`Sessions: ${data[0].Total_Sessions_Today} / ${data[0].Session_Cap}`);
 					process.exit(1);
@@ -88,6 +97,7 @@ function smiteApi() {
 					headers: {'User-Agent': 'require'}
 				}, (err, res, data) => {
 					requestErr(err, res);
+					if (config.log) log('getplayerstatus complete');
 					if (data[0].Match !== 0) {
 						if (smite.get('match') === undefined) {
 							request.get({
@@ -95,11 +105,15 @@ function smiteApi() {
 								json: true,
 								headers: {'User-Agent': 'request'}
 							}, (err, res, matchData) => {
+								requestErr(err, res);
+								if (config.log) log('getmatchplayerdetails complete');
 								request.get({
 									url: createURL('getfriends', true, [config.username]),
 									json: true,
 									headers: {'User-Agent': 'request'}
 								}, (err, res, friendData) => {
+									requestErr(err, res);
+									if (config.log) log('getfriends complete');
 									var p = matchData.find(function(obj) {return obj.playerName === config.username});
 									var maxPartySize = matchData.length / 2;
 									var partyCount = 1;
@@ -110,11 +124,13 @@ function smiteApi() {
 										}
 									}
 									rpc.setActivity({
-										details: q[p.Queue],
+										details: q[p.Queue][0],
 										state: `Party (${partyCount} / ${maxPartySize})`,
 										startTimestamp,
 										largeImageKey: p.GodName.replace(/_/g, '').toLowerCase() + '_jpg',
-										largeImageText: p.GodName,
+										largeImageText: p.GodName.replace(/_/g, ' '),
+										smallImageKey: q[p.Queue][1] + '_png',
+										smallImageText: q[p.Queue][1].replace(/^\w/, c => c.toUpperCase()),
 										instance: false
 									});
 									smite.set('match', p.Match);
@@ -123,15 +139,18 @@ function smiteApi() {
 							});
 						}
 					} else if (data[0].status === 0 || data[0].status === 5) {
-						rpc.setActivity({
-							details: 'Offline',
-							largeImageKey: 'logo_png',
-							largeImageText: 'Offline',
-							instance: false
-						});
+						if (config.offline) {
+							rpc.setActivity({
+								details: 'Offline',
+								largeImageKey: 'logo_png',
+								largeImageText: 'Offline',
+								instance: false
+							});
+						}
 						if (smite.get('match') !== undefined) {
 							log('Offline');
 							smite.delete('match');
+							if (config.offline) rpc.setActivity({});
 						}
 					} else {
 						rpc.setActivity({
@@ -150,18 +169,3 @@ function smiteApi() {
 		}
 	});
 }
-
-async function setActivity() {
-	if (!rpc) return;
-	smiteApi();
-}
-
-rpc.on('ready', () => {
-	setActivity();
-	log('Ready!');
-	setInterval(() => {
-		setActivity();
-	}, 15e3);
-});
-
-rpc.login({clientId}).catch(console.error);
