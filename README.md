@@ -3,24 +3,30 @@ Discord Remote Procedural Calls to show your smite match!
 
 ## Setup:
 * Apply to the [smite api](https://fs12.formsite.com/HiRez/form48/secure_index.html). They accept everyone but you may have to wait a couple hours. They will email you your devId and authKey when you are accepted
-* Open config.json in any text editor (notepad should do fine) and put in your username, platform (pc/xbox/ps4), api devId and api authKey
-* Download [Node.js](https://nodejs.org/en/) recommended version
+* Open config.json in any text editor (notepad should do fine) and put in your username, platform (pc/xbox/ps4), API devId and API authKey
+* Download [Node.js](https://nodejs.org/en/) recommended version (must be 8.0.0+)
 * Open command prompt and go to the directory you have the files in. To do this type **cd** then the directory
 * type **npm install** to install all the dependencies
 * type **node app**
 * Have fun!
-Each time you want to run it, open command prompt again and type **node app** in the your directory
 
-## Settings:
-There are 3 different settings you can change inside config.json
-* showRateLimit - When true it will show you have many sessions and calls you have left today with the smite api. It will NOT run the RPC!
-* offline - When true it will show when you are offline
-* log - When true will log http requests to help debug if something goes wrong
-The settings should always be true or false depending on what you want
+## Additional Notes:
+* To stop it just close the command prompt
+* Each time you want to run it, open command prompt again and type **node app** in the your directory
+* You have to start it **BEFORE** you launch smite. Since smite has added their own ~~garbage~~ discord RPC you have to start this one before because it is the first one that is open that is shown
+
+## Config:
+##### Required Config
+* username - This is your smite username
+* platform - This is the platform you are playing smite on [pc/xbox/ps4]
+* devId - The developer ID that is given to you when you apply for the smite API
+* authKey - The authentication key that is given to you when you apply for the smite API
+
+##### Optional Config
+* checkerInterval - This changes how often it will check your smite status. The lower the interval number the more API calls it will require so be careful
+* getAPIUseData - When set to true, each time your status changes it will also tell you how many API calls you have used and how many you have left
+* customClientId - If you want to use your own pictures for the gods and gamemodes then add your discord rpc client id here. The file names should be all lowercase with no spaces with the filetype of jpg.
 
 ## Contact:
 * **Discord:** Blake Belladonna#1608 (id: 166641492113358848)
 * **Reddit:** /u/Gazder
-
-## Forever:
-It can be a pain to turn it on each time you get on smite and off when you get on. You can use something called forvever so that it will always be running in the background, forever. It will containly be using your CPU but VERY little. To download forever type **npm install forever -g** into command prompt, that it all. When you want to start the smite RPC type **forever start app.js** in your directory. You can close your command prompt and it will still be running. To stop it again type **forever stop app.js** in your directory. I highly recommend you change the settings in config.json so that offline is false.
