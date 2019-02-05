@@ -3,7 +3,8 @@
 	"platform": "",
 	"devId": "",
 	"authKey": "",
-	"showRateLimit": false,
-	"offline": true,
-	"log": false
+
+	"checkerInterval": 15e3,
+	"getAPIUseData": false,
+	"customClientId": false
 }
